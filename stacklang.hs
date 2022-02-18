@@ -49,41 +49,30 @@ rankC DUP = (1, 2)
 rankC DEC = (1, 1)
 rankC SWAP = (2, 2)
 rankC (POP k) = (k, 0)
-rankC (IFELSE prog1 prog2) = addCmdRank (largerRank (addAllRanks prog1) (addAllRanks prog2)) (1, 0)
-
-
--- Helper function - adds two CmdRanks
-addCmdRank :: CmdRank -> CmdRank -> CmdRank
-addCmdRank (a, b) (c, d) = (a + c, b + d)
-
-
--- Helper function - adds an array of [Cmd] into one CmdRank
-addAllRanks :: Prog -> CmdRank
-addAllRanks (x:xs) = addCmdRank (rankC x) (addAllRanks xs)
-addAllRanks [] = (0, 0)
-
-
--- Helper function - determines the larger of two CmdRanks
-largerRank :: CmdRank -> CmdRank -> CmdRank
-largerRank (a, b) (c, d)
- | a < c = (c, d)
- | otherwise = (a, b)
+rankC (IFELSE prog1 prog2) = (1, 0)
 
 
 -- rankP - Determines the resulting rank of a program
 -- on a stack, or if there would be a RankError
 rankP :: Prog -> Rank -> Maybe Rank
-rankP (x:xs) i
-  | addCmdRankR (rankC x ) i < 0 = Nothing
-  | otherwise = rankP xs (addCmdRankR (rankC x ) i)  -- accounts for RankError
-rankP [] i = Just i
+rankP prog i
+  | (rank prog i) < 0 = Nothing
+  | otherwise = Just (rank prog i)
 
+
+-- Rank - does the work of rank so that Maybe
+-- does not need to be delt with
+rank :: Prog -> Rank -> Rank
+rank (x:xs) i = case x of (IFELSE prog1 prog2) -> (rank xs ( (min (rank prog1 (i - 1)) (rank prog2 (i - 1)) ) ) )
+                          _ -> rank xs (addCmdRankR (rankC x ) i)
+rank [] i = i
+--
 
 -- Helper function - adds a command rank to a running
 -- rank total
 addCmdRankR :: CmdRank -> Rank -> Rank
 addCmdRankR (a, b) i
-  | i - a < 0 = -1 -- Forces RankError
+  | i - a < 0 = -10 -- Forces RankError
   | otherwise = i - a + b
 
 -- semStatTC - Checks if a program is rank valid,
@@ -128,8 +117,15 @@ unVal [] = []
 
 -- Run - driver function. Evaluates stack and program
 -- and returns either a result or an error
-run :: Prog -> Stack -> Final
-run prog s = fromJust (semStatTC prog s)
+run :: Prog -> [Int] -> Final
+run prog s = fromJust (semStatTC prog (makeVal s))
+
+
+-- Helper function - turns the input list
+-- of Ints into a list of Vals
+makeVal :: [Int] -> [Val]
+makeVal (x:xs) = (I x):(makeVal xs)
+makeVal [] = []
 
 -- Helper function - removes the Just
 -- from the result so it can be returned
