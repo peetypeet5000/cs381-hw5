@@ -34,7 +34,7 @@ type Rank  = Int
 type CmdRank = (Int, Int)
 
 -- Final return type, supports error
-data Final = RankError | TypeError | A Stack
+data Final = RankError | TypeError | A [Int]
   deriving Show
 
 
@@ -111,8 +111,20 @@ semCmd ((IFELSE prog1 prog2):ps) (B x:xs) -- Append the program instructions, de
 semCmd (DEC:ps) (I x:xs) = semCmd ps ((I (x-1)):xs) -- Decrements the top element
 semCmd (SWAP:ps) (x:y:xs) = semCmd ps (y:x:xs) -- Swap the top two elements on the stack
 semCmd ((POP k):ps) s = semCmd ps (drop k s)
-semCmd [] s = Just (A s) -- Once out of commands, return the stack
+semCmd [] s = Just (A (unVal s)) -- Once out of commands, return the stack
 semCmd _ _ = Just TypeError -- If it does not pattern match, it is an invalid command
+
+
+-- Helper function - removes the Stack type
+-- from the result to make it an array of Ints.
+-- Also supports left over bools
+unVal :: Stack -> [Int]
+unVal ((I x):xs) = x:(unVal xs)
+unVal ((B x):xs)
+  | x = 1:(unVal xs)
+  | otherwise = 0:(unVal xs)
+unVal [] = []
+
 
 -- Run - driver function. Evaluates stack and program
 -- and returns either a result or an error
