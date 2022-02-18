@@ -60,8 +60,10 @@ rankP prog i
   | otherwise = Just (rank prog i)
 
 
--- Rank - does the work of rank so that Maybe
+-- Rank - does the work of rankP so that Maybe
 -- does not need to be delt with
+-- Recursivly call rank again in the case of an IFELSE, and pick whichever results in
+-- a lower rank value. The -1 on the i accounts for the IFELSE rankC value
 rank :: Prog -> Rank -> Rank
 rank (x:xs) i = case x of (IFELSE prog1 prog2) -> (rank xs ( (min (rank prog1 (i - 1)) (rank prog2 (i - 1)) ) ) )
                           _ -> rank xs (addCmdRankR (rankC x ) i)
@@ -138,35 +140,35 @@ fromJust (Just x) = x
 
 
 -- Test Cases:
-test1 :: Prog
-test1 = [LDI 3, DUP, ADD, LDI 5, SWAP]
-test2 :: Prog
-test2 = [LDI 8, POP 1, LDI 3, DUP, POP 2, LDI 4]
-test3 :: Prog
-test3 = [LDI 3, LDI 4, LDI 5, MULT, ADD]
-test4 :: Prog
-test4 = [LDI 2, ADD]
-test5 :: Prog
-test5 = [DUP]
-test6 :: Prog
-test6 = [POP 4]
-test7 :: Prog
-test7 = [LDB True, IFELSE [ADD] [LDI 7], ADD]
-test8 :: Prog
-test8 = [LDB True, LDI 1, LDI 10, LDI 5, IFELSE [ADD] [LDI 7], ADD]
-test9 :: Prog
-test9 = [LDI 20, LDI 1, LDI 10, LDI 5, LEQ, IFELSE [ADD] [LDI 7], DUP]
-test10 :: Prog
-test10 = [LDB True, LDB False, MULT]
-test11 :: Prog
-test11 = [LDI 10, DEC, DUP, DUP, DUP, POP 2]
-test12 :: Prog
-test12 = [LDI 10, LDI 20, LEQ, DEC]
-test13 :: Prog
-test13 = [LDI 10, LDI 5, LDB True, IFELSE [LDB True, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
-test14 :: Prog
-test14 = [LDI 10, LDI 5, LDB True, IFELSE [LDB False, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
-test15 :: Prog
-test15 = [LDI 10, LDI 5, LDB False, IFELSE [LDB True, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
-test16 :: Prog
-test16 = [LDI 10, LDI 5, LDB False, IFELSE [LDB True, IFELSE [ADD, ADD] [MULT]] [LDI 7]]
+--test1 :: Prog
+--test1 = [LDI 3, DUP, ADD, LDI 5, SWAP]
+--test2 :: Prog
+--test2 = [LDI 8, POP 1, LDI 3, DUP, POP 2, LDI 4]
+--test3 :: Prog
+--test3 = [LDI 3, LDI 4, LDI 5, MULT, ADD]
+--test4 :: Prog
+--test4 = [LDI 2, ADD]
+--test5 :: Prog
+--test5 = [DUP]
+--test6 :: Prog
+--test6 = [POP 4]
+--test7 :: Prog
+--test7 = [LDB True, IFELSE [ADD] [LDI 7], ADD]
+--test8 :: Prog
+--test8 = [LDB True, LDI 1, LDI 10, LDI 5, IFELSE [ADD] [LDI 7], ADD]
+--test9 :: Prog
+--test9 = [LDI 20, LDI 1, LDI 10, LDI 5, LEQ, IFELSE [ADD] [LDI 7], DUP]
+--test10 :: Prog
+--test10 = [LDB True, LDB False, MULT]
+--test11 :: Prog
+--test11 = [LDI 10, DEC, DUP, DUP, DUP, POP 2]
+--test12 :: Prog
+--test12 = [LDI 10, LDI 20, LEQ, DEC]
+--test13 :: Prog
+--test13 = [LDI 10, LDI 5, LDB True, IFELSE [LDB True, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
+--test14 :: Prog
+--test14 = [LDI 10, LDI 5, LDB True, IFELSE [LDB False, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
+--test15 :: Prog
+--test15 = [LDI 10, LDI 5, LDB False, IFELSE [LDB True, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
+--test16 :: Prog
+--test16 = [LDI 10, LDI 5, LDB False, IFELSE [LDB True, IFELSE [ADD, ADD] [MULT]] [LDI 7]]
