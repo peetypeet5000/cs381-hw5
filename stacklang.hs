@@ -49,14 +49,7 @@ rankC DUP = (1, 2)
 rankC DEC = (1, 1)
 rankC SWAP = (2, 2)
 rankC (POP k) = (k, 0)
-rankC (IFELSE prog1 prog2) = (addCmdRank (largerRank(progRank prog1) (progRank prog2)) (1, 0))
-
-
--- rankP - Determines the resulting rank of a program
--- on a stack, or if there would be a RankError
-progRank :: Prog -> CmdRank
-progRank (x:xs) = addCmdRank (progRank xs) (rankC x)  -- accounts for RankError
-progRank [] = (0, 0)
+rankC (IFELSE prog1 prog2) = addCmdRank (largerRank (addAllRanks prog1) (addAllRanks prog2)) (1, 0)
 
 
 -- Helper function - adds two CmdRanks
@@ -93,10 +86,10 @@ addCmdRankR (a, b) i
   | i - a < 0 = -1 -- Forces RankError
   | otherwise = i - a + b
 
--- evalStatTC - Checks if a program is rank valid,
+-- semStatTC - Checks if a program is rank valid,
 -- otherwise produces a RankError
-evalStatTC :: Prog -> Stack -> Maybe Final
-evalStatTC prog s 
+semStatTC :: Prog -> Stack -> Maybe Final
+semStatTC prog s 
   | rankP prog (length s) /= Nothing = semCmd prog s
   | otherwise = Just RankError
 
@@ -124,8 +117,11 @@ semCmd _ _ = Just TypeError -- If it does not pattern match, it is an invalid co
 -- Run - driver function. Evaluates stack and program
 -- and returns either a result or an error
 run :: Prog -> Stack -> Final
-run prog s = fromJust (evalStatTC prog s)
+run prog s = fromJust (semStatTC prog s)
 
+-- Helper function - removes the Just
+-- from the result so it can be returned
+-- as just a Final data type
 fromJust :: Maybe Final -> Final
 fromJust (Just TypeError)  = TypeError
 fromJust (Just RankError)  = RankError
@@ -134,28 +130,35 @@ fromJust (Just x) = x
 
 
 -- Test Cases:
-p1 :: Prog
-p1 = [LDI 3, DUP, ADD, LDI 5, SWAP]
-
-a :: Prog
-a = [LDB False, IFELSE [LDI 1] [LDI 2]]
-
-b :: Prog
-b = [LDI 8, POP 1, LDI 3, DUP, POP 2, LDI 4]
-
-d :: Prog
-d = [LDI 2, ADD]
-
-g :: Prog
-g = [LDI 10, LDI 20, LEQ, DEC]
-
-c :: Cmd
-c = (IFELSE [IFELSE [LDI 1] [LDI 1]] [LDI 7])
-rtest1 :: Prog
-
-rtest1 = [LDI 10, LDI 5, LDB True, IFELSE [LDB True, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
-
-s :: Stack
-s = [I 5, I 5, B True, I 2, I 3]
-p :: Stack
-p = [I 2]
+test1 :: Prog
+test1 = [LDI 3, DUP, ADD, LDI 5, SWAP]
+test2 :: Prog
+test2 = [LDI 8, POP 1, LDI 3, DUP, POP 2, LDI 4]
+test3 :: Prog
+test3 = [LDI 3, LDI 4, LDI 5, MULT, ADD]
+test4 :: Prog
+test4 = [LDI 2, ADD]
+test5 :: Prog
+test5 = [DUP]
+test6 :: Prog
+test6 = [POP 4]
+test7 :: Prog
+test7 = [LDB True, IFELSE [ADD] [LDI 7], ADD]
+test8 :: Prog
+test8 = [LDB True, LDI 1, LDI 10, LDI 5, IFELSE [ADD] [LDI 7], ADD]
+test9 :: Prog
+test9 = [LDI 20, LDI 1, LDI 10, LDI 5, LEQ, IFELSE [ADD] [LDI 7], DUP]
+test10 :: Prog
+test10 = [LDB True, LDB False, MULT]
+test11 :: Prog
+test11 = [LDI 10, DEC, DUP, DUP, DUP, POP 2]
+test12 :: Prog
+test12 = [LDI 10, LDI 20, LEQ, DEC]
+test13 :: Prog
+test13 = [LDI 10, LDI 5, LDB True, IFELSE [LDB True, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
+test14 :: Prog
+test14 = [LDI 10, LDI 5, LDB True, IFELSE [LDB False, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
+test15 :: Prog
+test15 = [LDI 10, LDI 5, LDB False, IFELSE [LDB True, IFELSE [ADD, DUP] [MULT]] [LDI 7]]
+test16 :: Prog
+test16 = [LDI 10, LDI 5, LDB False, IFELSE [LDB True, IFELSE [ADD, ADD] [MULT]] [LDI 7]]
